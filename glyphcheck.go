@@ -7,6 +7,42 @@ import "bufio"
 import "io"
 import "golang.org/x/text/unicode/norm"
 import "unicode/utf8"
+import "unicode"
+
+type allowList struct {
+
+	Scripts []*unicode.RangeTable
+	Categories []*unicode.RangeTable
+	Characters map[rune]struct{}
+
+}
+
+var devAllowList = allowList{
+
+	Scripts: []*unicode.RangeTable{
+		
+		unicode.Latin,
+		unicode.Common,
+
+	},
+
+	Categories: []*unicode.RangeTable{
+
+		unicode.Letter,
+		unicode.Number,
+		unicode.Punct,
+
+	},
+
+	Characters: map[rune]struct{}{
+
+		'\n':{},
+		'\r':{},
+		'\t':{},
+
+	},
+
+}
 
 
 func main() {
@@ -16,10 +52,12 @@ func main() {
 
 	readFile(fileName);
 
-
 }
 
 func readFile(fileName string) {
+
+	var currentAllowList allowList;
+	currentAllowList = getAllowList();
 
 	var file *os.File;
 	var errOpenFile error;
@@ -34,6 +72,7 @@ func readFile(fileName string) {
 	defer file.Close();
 
 	var reader *bufio.Reader;
+
 	reader = bufio.NewReader(file);
 
 	var readBytes []byte;
@@ -57,14 +96,14 @@ func readFile(fileName string) {
 
 		}
 
-		checkLine(readBytes, lineIndex);
+		checkLine(readBytes, lineIndex, fileName, currentAllowList);
 		lineIndex ++;
 
 	}
 
 }
 
-func checkLine(readBytes []byte, lineIndex int) {
+func checkLine(readBytes []byte, lineIndex int, fileName string, currentAllowList allowList) {
 
 	var normalizedBytes []byte;	
 	normalizedBytes = norm.NFC.Bytes(readBytes);
@@ -86,7 +125,7 @@ func checkLine(readBytes []byte, lineIndex int) {
 
 		}
 
-		fmt.Printf("Line: %d; Column: %d; Character: %c; Unicode: %U\n", lineIndex, runeIndex + 1 , currentRune, currentRune);
+		fmt.Printf("File: %s; Line: %d; Column: %d; Character: %c; Unicode: %U\n",fileName, lineIndex, runeIndex + 1 , currentRune, currentRune);
 		
 		runeIndex ++;
 		i += runeSize;	
@@ -94,5 +133,11 @@ func checkLine(readBytes []byte, lineIndex int) {
 
 	}
 
+
+}
+
+func getAllowList() allowList {
+
+	return devAllowList;
 
 }
