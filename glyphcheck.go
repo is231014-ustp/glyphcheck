@@ -39,6 +39,8 @@ func readFile(fileName string) {
 	var readBytes []byte;
 	var readBytesError error;
 
+	var lineIndex int = 1;
+
 	for {
 
 		readBytes, readBytesError = reader.ReadBytes('\n');
@@ -51,17 +53,18 @@ func readFile(fileName string) {
 
 		if readBytesError == io.EOF && len(readBytes) == 0 {
 
-			break
+			break;
 
 		}
 
-		checkLine(readBytes);
+		checkLine(readBytes, lineIndex);
+		lineIndex ++;
 
 	}
 
 }
 
-func checkLine(readBytes []byte) {
+func checkLine(readBytes []byte, lineIndex int) {
 
 	var normalizedBytes []byte;	
 	normalizedBytes = norm.NFC.Bytes(readBytes);
@@ -76,15 +79,16 @@ func checkLine(readBytes []byte) {
 		currentRune, runeSize = utf8.DecodeRune(normalizedBytes[i:])			
 		if currentRune == utf8.RuneError && runeSize == 1 {
 
-			fmt.Printf("Ungültiges UTF-8 encoding 0x%X an Offset %d\n", normalizedBytes[i])
-			runeIndex++;
+			fmt.Printf("Invalid UTF-8 encoding 0x%X at offset %d\n", normalizedBytes[i], i);
+			runeIndex ++;
 			i += runeSize;
+			continue;
 
 		}
 
-		fmt.Printf("Zeichen %c mit Unicode %U an Index %d\n", currentRune, currentRune, runeIndex);
+		fmt.Printf("Line: %d; Column: %d; Character: %c; Unicode: %U\n", lineIndex, runeIndex + 1 , currentRune, currentRune);
 		
-		runeIndex++;
+		runeIndex ++;
 		i += runeSize;	
 		
 
