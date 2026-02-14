@@ -74,6 +74,13 @@ func checkLine(readBytes []byte) {
 		var runeSize int;
 		
 		currentRune, runeSize = utf8.DecodeRune(normalizedBytes[i:])			
+		if currentRune == utf8.RuneError && runeSize == 1 {
+
+			fmt.Printf("Ungültiges UTF-8 encoding 0x%X an Offset %d\n", normalizedBytes[i])
+			runeIndex++;
+			i += runeSize;
+
+		}
 
 		fmt.Printf("Zeichen %c mit Unicode %U an Index %d\n", currentRune, currentRune, runeIndex);
 		
