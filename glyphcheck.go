@@ -1,5 +1,3 @@
-
-
 //Test characters:
 // а = Cyrillic 'a'; U+0430
 // ρ = Greek 'roh'; U+03C1
@@ -55,17 +53,28 @@ var devAllowList = allowList{
 
 }
 
-
 func main() {
 
 	var fileName string;
 	fileName = "glyphcheck.go"
 
-	readFile(fileName);
+	var allowListViolation = false;
+
+	if readFile(fileName) {
+
+		allowListViolation = true;
+
+	}
+
+	if allowListViolation {
+
+		os.Exit(1);
+
+	}
 
 }
 
-func readFile(fileName string) {
+func readFile(fileName string) bool {
 
 	var currentAllowList allowList;
 	currentAllowList = getAllowList();
@@ -88,6 +97,8 @@ func readFile(fileName string) {
 	var readBytes []byte;
 	var readBytesError error;
 
+	var violationInFile bool = false;
+
 	var lineIndex int = 1;
 
 	for {
@@ -106,19 +117,28 @@ func readFile(fileName string) {
 
 		}
 
-		checkLine(readBytes, lineIndex, fileName, currentAllowList);
+		if checkLine(readBytes, lineIndex, fileName, currentAllowList) {
+
+			violationInFile = true;
+
+		}
+
 		lineIndex ++;
 
 	}
 
+	return violationInFile;
+
 }
 
-func checkLine(readBytes []byte, lineIndex int, fileName string, currentAllowList allowList) {
+func checkLine(readBytes []byte, lineIndex int, fileName string, currentAllowList allowList) bool {
 
 	var normalizedBytes []byte;	
 	normalizedBytes = norm.NFC.Bytes(readBytes);
 
 	var runeIndex int = 0;
+
+	var violationInLine bool = false;
 
 	for i := 0; i < len(normalizedBytes); {
 
@@ -129,8 +149,10 @@ func checkLine(readBytes []byte, lineIndex int, fileName string, currentAllowLis
 		if currentRune == utf8.RuneError && runeSize == 1 {
 
 			fmt.Printf("Invalid UTF-8 encoding 0x%X at offset %d\n", normalizedBytes[i], i);
+			violationInLine = true;
 			runeIndex ++;
 			i += runeSize;
+
 			continue;
 
 		}
@@ -140,7 +162,8 @@ func checkLine(readBytes []byte, lineIndex int, fileName string, currentAllowLis
 		
 		if !runeIsAllowed {
 
-			fmt.Printf("File: %s; Line: %d; Column: %d; Character: %c; Unicode: %U\n",fileName, lineIndex, runeIndex + 1 , currentRune, currentRune);
+			violationInLine = true;	
+			fmt.Printf("File: %s; Line: %d; Column: %d; Byte Offset: %d; Character: %c; Unicode: %U\n",fileName, lineIndex, runeIndex + 1, i, currentRune, currentRune);
 
 		}
 	
@@ -150,6 +173,7 @@ func checkLine(readBytes []byte, lineIndex int, fileName string, currentAllowLis
 
 	}
 
+	return violationInLine;
 
 }
 
