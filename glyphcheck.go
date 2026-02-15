@@ -1,3 +1,9 @@
+
+
+//Test characters:
+// а = Cyrillic 'a'; U+0430
+// ρ = Greek 'roh'; U+03C1
+
 package main
 
 import "fmt"
@@ -39,6 +45,11 @@ var devAllowList = allowList{
 		'\n':{},
 		'\r':{},
 		'\t':{},
+		' ':{},
+		'=':{},
+		'+':{},
+		'<':{},
+		'>':{},
 
 	},
 
@@ -72,7 +83,6 @@ func readFile(fileName string) {
 	defer file.Close();
 
 	var reader *bufio.Reader;
-
 	reader = bufio.NewReader(file);
 
 	var readBytes []byte;
@@ -124,9 +134,16 @@ func checkLine(readBytes []byte, lineIndex int, fileName string, currentAllowLis
 			continue;
 
 		}
-
-		fmt.Printf("File: %s; Line: %d; Column: %d; Character: %c; Unicode: %U\n",fileName, lineIndex, runeIndex + 1 , currentRune, currentRune);
 		
+
+		var runeIsAllowed bool = isAllowed(currentRune, currentAllowList);
+		
+		if !runeIsAllowed {
+
+			fmt.Printf("File: %s; Line: %d; Column: %d; Character: %c; Unicode: %U\n",fileName, lineIndex, runeIndex + 1 , currentRune, currentRune);
+
+		}
+	
 		runeIndex ++;
 		i += runeSize;	
 		
@@ -139,5 +156,32 @@ func checkLine(readBytes []byte, lineIndex int, fileName string, currentAllowLis
 func getAllowList() allowList {
 
 	return devAllowList;
+
+}
+
+func isAllowed(runeToCheck rune, currentAllowList allowList) bool {
+
+	var runeExists bool;
+	_, runeExists = currentAllowList.Characters[runeToCheck]
+
+	if runeExists {
+
+		return true;
+
+	}
+
+	if !unicode.In(runeToCheck, currentAllowList.Scripts...) {
+
+		return false;
+
+	}
+
+	if !unicode.In(runeToCheck, currentAllowList.Categories...) {
+
+		return false;
+
+	}
+
+	return true;
 
 }
