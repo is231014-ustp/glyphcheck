@@ -6,18 +6,32 @@ package main
 
 import "fmt"
 import "os"
-import "log"
 import "bufio"
 import "io"
 import "golang.org/x/text/unicode/norm"
 import "unicode/utf8"
 import "unicode"
+import "strings"
+import "io/fs"
+import "path/filepath"
 
 type allowList struct {
 
 	Scripts []*unicode.RangeTable
 	Categories []*unicode.RangeTable
 	Characters map[rune]struct{}
+
+}
+
+var excludedDirectories = map[string]struct{}{
+
+	".git":{},
+
+}
+
+var allowedExtensions = map[string]struct{}{
+
+	".go":{},
 
 }
 
@@ -55,29 +69,17 @@ var devAllowList = allowList{
 
 func main() {
 
-	var fileName string;
-	fileName = "glyphcheck.go"
+	var root string = ".";
 
-	var allowListViolation = false;
-
-	if readFile(fileName) {
-
-		allowListViolation = true;
-
-	}
-
-	if allowListViolation {
-
-		os.Exit(1);
+	if scanDirectory(root) {
+	
+		os.Exit(1)
 
 	}
 
 }
 
-func readFile(fileName string) bool {
-
-	var currentAllowList allowList;
-	currentAllowList = getAllowList();
+func readFile(fileName string, currentAllowList allowList) bool {
 
 	var file *os.File;
 	var errOpenFile error;
@@ -86,7 +88,8 @@ func readFile(fileName string) bool {
 	file, errOpenFile = os.Open(fileName);
 	if errOpenFile != nil {
 
-		log.Fatal(errOpenFile);
+		fmt.Println(errOpenFile);
+		return true;
 
 	}
 	defer file.Close();
@@ -107,7 +110,8 @@ func readFile(fileName string) bool {
 
 		if readBytesError != nil && readBytesError != io.EOF {
 
-			log.Fatal(readBytesError);
+			fmt.Println(readBytesError);
+			return true;
 
 		}
 
@@ -123,7 +127,7 @@ func readFile(fileName string) bool {
 
 		}
 
-		lineIndex ++;
+		lineIndex++;
 
 	}
 
@@ -150,7 +154,7 @@ func checkLine(readBytes []byte, lineIndex int, fileName string, currentAllowLis
 
 			fmt.Printf("Invalid UTF-8 encoding 0x%X at offset %d\n", normalizedBytes[i], i);
 			violationInLine = true;
-			runeIndex ++;
+			runeIndex++;
 			i += runeSize;
 
 			continue;
@@ -167,7 +171,7 @@ func checkLine(readBytes []byte, lineIndex int, fileName string, currentAllowLis
 
 		}
 	
-		runeIndex ++;
+		runeIndex++;
 		i += runeSize;	
 		
 
@@ -207,5 +211,85 @@ func isAllowed(runeToCheck rune, currentAllowList allowList) bool {
 	}
 
 	return true;
+
+}
+
+func scanDirectory (root string) bool {
+
+	var currentAllowList allowList;
+	currentAllowList = getAllowList();
+
+
+	var violationInDirectory bool = false;
+
+	var walkDirError error;
+
+	walkDirError = filepath.WalkDir(root, func(path string, currentDirectory fs.DirEntry, err error) error{
+
+		if err != nil {
+
+			fmt.Printf("Error while scanning Directories: %s: %v\n", path, err);
+			violationInDirectory = true;
+			return nil;
+
+		}
+
+		var name string;
+		name = currentDirectory.Name();
+		
+		if currentDirectory.IsDir() {
+
+			var dirIsExcluded bool;
+			_, dirIsExcluded = excludedDirectories[name];
+
+			if dirIsExcluded {
+
+				return filepath.SkipDir;
+
+			}
+			
+			return nil;
+
+		}
+
+		if !currentDirectory.Type().IsRegular() {
+
+			return nil;
+
+		}
+
+
+		var extension string;
+		extension = strings.ToLower(filepath.Ext(name))
+
+		var extensionIsAllowed bool;
+		_, extensionIsAllowed = allowedExtensions[extension];
+
+		if !extensionIsAllowed {
+
+			return nil;
+
+		}
+
+		if readFile(path, currentAllowList) {
+
+			violationInDirectory = true;
+
+		}
+
+		return nil;
+
+
+	})
+
+	if walkDirError != nil {
+
+		fmt.Printf("WalkDir failed: %v\n", walkDirError);
+		violationInDirectory = true;
+
+	}
+
+	return violationInDirectory
+
 
 }
