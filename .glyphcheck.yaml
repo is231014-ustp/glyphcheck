@@ -28,3 +28,10 @@ allowed:
     - "`"
     - "<"
     - ">"
+
+suspicious:
+
+  enabled: true
+
+  characters:
+    - "ᴀ"

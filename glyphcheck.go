@@ -1,6 +1,8 @@
 //Test characters:
 // а = Cyrillic 'a'; U+0430
 // ρ = Greek 'roh'; U+03C1
+// ɑ = Latin small alpha
+// ᴀ = Latin small capital 'A'
 
 package main
 
@@ -25,6 +27,16 @@ type allowList struct {
 
 }
 
+type suspiciousList struct {
+
+	Enabled bool
+	Characters map[rune]struct{}
+
+}
+
+var defaultSuspiciousCharacters = []rune{'ɑ'}
+
+
 type Config struct {
 
 	Root string `yaml:"root"`
@@ -35,6 +47,11 @@ type Config struct {
 		Categories []string `yaml:"categories"`	
 		Characters []string `yaml:"characters"`
 	} `yaml:"allowed"`
+	Suspicious struct{
+		Enabled bool `yaml:"enabled"`
+		Characters []string `yaml:"characters"`
+
+	} `yaml:"suspicious"`
 
 }
 
@@ -74,7 +91,10 @@ func main() {
 	var currentAllowList allowList;
 	currentAllowList = buildAllowList(currentConfig);
 
-	if scanDirectory(currentConfig.Root, currentAllowList, excludedDirectories, allowedExtensions) {
+	var currentSuspiciousList suspiciousList;
+	currentSuspiciousList = buildSuspiciousList(currentConfig);
+
+	if scanDirectory(currentConfig.Root, currentAllowList, excludedDirectories, allowedExtensions, currentSuspiciousList) {
 	
 		os.Exit(1)
 
@@ -82,7 +102,7 @@ func main() {
 
 }
 
-func readFile(fileName string, currentAllowList allowList) bool {
+func readFile(fileName string, currentAllowList allowList, currentSuspiciousList suspiciousList) bool {
 
 	var file *os.File;
 	var errOpenFile error;
@@ -124,7 +144,7 @@ func readFile(fileName string, currentAllowList allowList) bool {
 
 		}
 
-		if checkLine(readBytes, lineIndex, fileName, currentAllowList) {
+		if checkLine(readBytes, lineIndex, fileName, currentAllowList, currentSuspiciousList) {
 
 			violationInFile = true;
 
@@ -138,7 +158,7 @@ func readFile(fileName string, currentAllowList allowList) bool {
 
 }
 
-func checkLine(readBytes []byte, lineIndex int, fileName string, currentAllowList allowList) bool {
+func checkLine(readBytes []byte, lineIndex int, fileName string, currentAllowList allowList, currentSuspiciousList suspiciousList) bool {
 
 	var normalizedBytes []byte;	
 	normalizedBytes = norm.NFC.Bytes(readBytes);
@@ -165,18 +185,28 @@ func checkLine(readBytes []byte, lineIndex int, fileName string, currentAllowLis
 		}
 		
 
-		var runeIsAllowed bool = isAllowed(currentRune, currentAllowList);
-		
+		var runeIsAllowed bool; 
+		runeIsAllowed = isAllowed(currentRune, currentAllowList);
+
 		if !runeIsAllowed {
 
 			violationInLine = true;	
-			fmt.Printf("File: %s; Line: %d; Column: %d; disallowed unicode character: %U (%c)\n",fileName, lineIndex, runeIndex + 1, currentRune, currentRune);
+			fmt.Printf("[VIOLATION] File: %s; Line: %d; Column: %d; disallowed unicode character: %U (%c)\n",fileName, lineIndex, runeIndex + 1, currentRune, currentRune);
 
+		} else {
+
+			var runeIsSuspicious bool;
+			runeIsSuspicious = isSuspiciousCheck(currentRune, currentSuspiciousList);
+
+			if runeIsSuspicious {
+
+				fmt.Printf("[WARNING] File: %s; Line: %d; Column: %d; suspicious unicode character: %U (%c)\n",fileName, lineIndex, runeIndex + 1, currentRune, currentRune);
+
+			}
 		}
 	
 		runeIndex++;
 		i += runeSize;	
-		
 
 	}
 
@@ -187,7 +217,7 @@ func checkLine(readBytes []byte, lineIndex int, fileName string, currentAllowLis
 func isAllowed(runeToCheck rune, currentAllowList allowList) bool {
 
 	var runeExists bool;
-	_, runeExists = currentAllowList.Characters[runeToCheck]
+	_, runeExists = currentAllowList.Characters[runeToCheck];
 
 	if runeExists {
 
@@ -211,7 +241,22 @@ func isAllowed(runeToCheck rune, currentAllowList allowList) bool {
 
 }
 
-func scanDirectory (root string, currentAllowList allowList, excludedDirectories map[string]struct{}, allowedExtensions map[string]struct{}) bool {
+func isSuspiciousCheck(runeToCheck rune, currentSuspiciousList suspiciousList) bool {
+
+	var runeExists bool;
+
+	if !currentSuspiciousList.Enabled {
+
+		return false;
+
+	}
+
+	_, runeExists = currentSuspiciousList.Characters[runeToCheck];
+
+	return runeExists;
+}
+
+func scanDirectory (root string, currentAllowList allowList, excludedDirectories map[string]struct{}, allowedExtensions map[string]struct{}, currentSuspiciousList suspiciousList) bool {
 
 	var violationInDirectory bool = false;
 
@@ -264,7 +309,7 @@ func scanDirectory (root string, currentAllowList allowList, excludedDirectories
 
 		}
 
-		if readFile(path, currentAllowList) {
+		if readFile(path, currentAllowList, currentSuspiciousList) {
 
 			violationInDirectory = true;
 
@@ -293,11 +338,13 @@ func loadConfig(configPath string) (Config, error) {
 
 	currentConfig.Root = ".";
 	currentConfig.AllowedExtensions = []string{".go"};
-	currentConfig.ExcludedDirectories = []string{".git"}
+	currentConfig.ExcludedDirectories = []string{".git"};
 
 	currentConfig.Allowed.Scripts = []string{"Latin", "Common"};
-	currentConfig.Allowed.Categories = []string{"Letter", "Number", "Punct"}
-	currentConfig.Allowed.Characters = []string{"\n","\r","\t", " ", "=", "+", "-", "<", ">"}
+	currentConfig.Allowed.Categories = []string{"Letter", "Number", "Punct"};
+	currentConfig.Allowed.Characters = []string{"\n","\r","\t", " ", "=", "+", "-", "<", ">"};
+
+	currentConfig.Suspicious.Enabled = true;
 
 	var configFileData []byte;
 	var configFileError error;
@@ -429,7 +476,6 @@ func buildAllowList (config Config) allowList {
 
 	var currentAllowList allowList;
 	
-	currentAllowList.Characters = make(map[rune]struct{});
 	currentAllowList.Characters = characterStringSliceToMap(config.Allowed.Characters);
 
 	var scriptName string;
@@ -441,7 +487,7 @@ func buildAllowList (config Config) allowList {
 
 		if scriptRangeTable == nil {
 
-			fmt.Printf("Unkown script in config: %c\n", scriptName);
+			fmt.Printf("Unkown script in config: %s\n", scriptName);
 			continue;
 
 		}
@@ -459,7 +505,7 @@ func buildAllowList (config Config) allowList {
 
 		if categoryRangeTable == nil {
 
-			fmt.Printf("Unkown Category in config: %c\n", categoryName);
+			fmt.Printf("Unkown Category in config: %s\n", categoryName);
 			continue;
 		}
 	
@@ -469,6 +515,48 @@ func buildAllowList (config Config) allowList {
 
 
 	return currentAllowList;
+
+}
+
+func runeSliceToMap(runeSlice []rune) map[rune]struct{} {
+
+	var runeMap map[rune]struct{};
+	runeMap = make(map[rune]struct{});
+
+	var currentRune rune;
+	
+	for _, currentRune = range runeSlice {
+
+		runeMap[currentRune] = struct{}{};
+
+	}
+
+	return runeMap;
+
+}
+
+func buildSuspiciousList (config Config) suspiciousList {
+
+	var currentSuspiciousList suspiciousList;
+	currentSuspiciousList.Enabled = config.Suspicious.Enabled;
+	
+	var defaultConfigMerge map[rune]struct{};
+	defaultConfigMerge = runeSliceToMap(defaultSuspiciousCharacters);
+
+	var configMap map[rune]struct{};
+	configMap = characterStringSliceToMap(config.Suspicious.Characters);
+
+	var currentRune rune;
+
+	for currentRune = range configMap {
+
+		defaultConfigMerge[currentRune] = struct{}{};
+
+	}
+
+	currentSuspiciousList.Characters = defaultConfigMerge;
+
+	return currentSuspiciousList;
 
 }
 
