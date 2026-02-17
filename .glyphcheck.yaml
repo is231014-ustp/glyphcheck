@@ -1,0 +1,30 @@
+root: .
+
+allowed_extensions:
+  - .go
+
+excluded_directories:
+  - .git
+
+allowed:
+
+  scripts:
+    - Latin
+    - Common
+
+  categories:
+    - Letter
+    - Number
+    - Punct
+
+  characters:
+    - "\n"
+    - "\r"
+    - "\t"
+    - " "
+    - "="
+    - "+"
+    - "-"
+    - "`"
+    - "<"
+    - ">"
