@@ -1,0 +1,25 @@
+name: glyphcheck (self test)
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  glyphcheck:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build glyphcheck
+        run: go build -o glyphcheck .
+    
+      - name: Run glyphcheck
+        run: ./glyphcheck
