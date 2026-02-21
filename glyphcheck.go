@@ -1,10 +1,3 @@
-//Test characters:
-// а = Cyrillic 'a'; U+0430
-// ρ = Greek 'roh'; U+03C1
-// ɑ = Latin small alpha
-// ᴀ = Latin small capital 'A'
-// Ƭ = LATIN CAPITAL LETTER T WITH HOOK
-
 package main
 
 import "fmt"
