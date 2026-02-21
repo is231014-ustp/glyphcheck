@@ -1,4 +1,5 @@
 // "ᴀ" - test 
+// "Ѕ" - test 2
 package main
 
 import "fmt"
