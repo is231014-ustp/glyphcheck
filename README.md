@@ -181,8 +181,6 @@ Current prototype limitations:
 * Single-script detection not fully implemented
 * Suspicious list is partially hardcoded
 * No performance optimization yet
-* No incremental scanning
-* No IDE integration
 
 **Detected suspicious characters currently do not fail the pipeline (they do not affect the exit code).** 
 
