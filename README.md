@@ -4,18 +4,18 @@ It detects potentially dangerous Unicode characters in source code to help preve
 
 **This project is currently a Proof of Concept / MVP and is not production-ready!!!**
 
-# Overview
+## Overview
 Modern programming languages allow Unicode characters in identifiers and strings. While useful, this also enables attackers to introduce visually similar characters (homoglyphs) that can hide malicious code.
 
 Glyphcheck scans files and flags:
 
 * Disallowed characters — characters outside your configured allow-list
 
-* Suspicious characters — known problematic glyphs form the allowed script often used in attacks
+* Suspicious characters — known problematic glyphs from the allowed script often used in attacks
 
 It is designed to be integrated into CI/CD pipelines so repositories can automatically reject unsafe characters before merge or release.
 
-# Features
+## Features
 
 * Allow-list based validation
 
@@ -33,7 +33,7 @@ It is designed to be integrated into CI/CD pipelines so repositories can automat
 
 * Directory exclusion support
 
-# Current Status
+## Current Status
 
 | Feature                           | Status                 |
 | --------------------------------- | ---------------------- |
@@ -43,7 +43,7 @@ It is designed to be integrated into CI/CD pipelines so repositories can automat
 | Config file support               | ✅                      |
 | Production stability              | ❌ Not yet              |
 
-# Installation
+## Installation
 Requires Go ≥ 1.24
 
 ```
@@ -52,7 +52,7 @@ cd glyphcheck
 go build -o glyphcheck .
 ```
 
-# Usage
+## Usage
 
 Run in repository root:
 ```
@@ -62,7 +62,7 @@ The tool looks for:
 ```
 .glyphcheck.yaml
 ```
-If the file is missing, defaults are used. It is highly recomended to use the config file to adjut to you specific needs.
+If the file is missing, defaults are used. It is highly recommended to use the config file to adjust to your specific needs.
 
 Exit codes:
 
@@ -71,7 +71,7 @@ Exit codes:
 | 0    | No violations                |
 | 1    | Violations or runtime errors |
 
-# Example CI Integration (GitHub Actions)
+## Example CI Integration (GitHub Actions)
 ```
 - name: Build glyphcheck
   run: go build -o glyphcheck .
@@ -86,7 +86,7 @@ Errors are printed in GitHub Actions annotation format:
 ::error file=main.go,line=5,col=10::disallowed unicode character U+01C3 (ǃ)
 ```
 
-# Configuration
+## Configuration
 
 Example .glyphcheck.yaml:
 
@@ -127,7 +127,7 @@ suspicious:
     - "ᴀ"
 ```
 
-## Config Fields
+### Config Fields
 
 ```root``` - Directory to scan recursively.
 
@@ -152,7 +152,7 @@ suspicious:
 
 ```suspicious.characters``` - Additional characters to flag as suspicious.
 
-# How Detection Works
+## How Detection Works
 
 1. Files are read line-by-line
 
@@ -164,15 +164,15 @@ suspicious:
 
 4. Any error causes non-zero exit status
 
-# Security Model
+## Security Model
 
-Glyphcheck follows a allow-list security model:
+Glyphcheck follows an allow-list security model:
 
 Only explicitly allowed Unicode scripts, categories, and characters are permitted.
 
 This is more secure than deny-list approaches because new Unicode homoglyphs cannot bypass the filter.
 
-# Limitations
+## Limitations
 
 Current prototype limitations:
 
@@ -184,9 +184,9 @@ Current prototype limitations:
 * No incremental scanning
 * No IDE integration
 
-**Detected suspicious characters currently do not fail the pipeline (they do not effect the exit code).** 
+**Detected suspicious characters currently do not fail the pipeline (they do not affect the exit code).** 
 
-# Roadmap
+## Roadmap
 
 Planned improvements:
 
@@ -196,7 +196,7 @@ Planned improvements:
 * Performance optimization for large repos
 * Adding option in config to fail pipeline if suspicious characters are detected
 
-# Motivation
+## Motivation
 
 Unicode security issues are increasingly relevant in:
 
@@ -208,11 +208,11 @@ Unicode security issues are increasingly relevant in:
 
 Glyphcheck demonstrates a practical CI-enforced defense approach.
 
-# Dependencies
+## Dependencies
 
 * ```golang.org/x/text``` — Unicode normalization
 * ```gopkg.in/yaml.v3``` — configuration parsing
 
-# License
+## License
 
 ------------------!!!!!ADD LICENSE DON'T FORGET!!!!!------------------
