@@ -9,9 +9,9 @@ Modern programming languages allow Unicode characters in identifiers and strings
 
 Glyphcheck scans files and flags:
 
-* Disallowed characters — characters outside your configured allow-list
+* Disallowed characters - characters outside your configured allow-list
 
-* Suspicious characters — known problematic glyphs from the allowed script often used in attacks
+* Suspicious characters - known problematic glyphs from the allowed script often used in attacks
 
 It is designed to be integrated into CI/CD pipelines so repositories can automatically reject unsafe characters before merge or release.
 
@@ -208,8 +208,8 @@ Glyphcheck demonstrates a practical CI-enforced defense approach.
 
 ## Dependencies
 
-* ```golang.org/x/text``` — Unicode normalization
-* ```gopkg.in/yaml.v3``` — configuration parsing
+* ```golang.org/x/text``` - Unicode normalization
+* ```gopkg.in/yaml.v3``` - configuration parsing
 
 ## License
 
