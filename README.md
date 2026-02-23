@@ -213,4 +213,4 @@ Glyphcheck demonstrates a practical CI-enforced defense approach.
 
 ## License
 
-------------------!!!!!ADD LICENSE DON'T FORGET!!!!!------------------
+This project is licensed under the MIT License - see the LICENSE file for details.
