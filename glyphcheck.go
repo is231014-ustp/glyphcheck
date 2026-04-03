@@ -361,7 +361,7 @@ func checkLine(readBytes []byte, lineIndex int, fileName string, currentAllowLis
 		if !runeIsAllowed {
 
 			violationInLine = true;	
-			fmt.Printf("::error file=%s,line=%d,col=%d::disallowed unicode character %U (%c)\n",fileName, lineIndex, runeIndex + 1, currentRune, currentRune);
+			fmt.Printf("::error :: file=%s,line=%d,col=%d disallowed unicode character %U (%c)\n",fileName, lineIndex, runeIndex + 1, currentRune, currentRune);
 
 		} else {
 
@@ -370,7 +370,7 @@ func checkLine(readBytes []byte, lineIndex int, fileName string, currentAllowLis
 
 			if runeIsSuspicious {
 
-				fmt.Printf("::warning file=%s,line=%d,col=%d::suspicious unicode character %U (%c)\n",fileName, lineIndex, runeIndex + 1, currentRune, currentRune);
+				fmt.Printf("::warning :: file=%s,line=%d,col=%d suspicious unicode character %U (%c)\n",fileName, lineIndex, runeIndex + 1, currentRune, currentRune);
 
 			}
 		}
