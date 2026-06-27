@@ -4,6 +4,15 @@ It detects potentially dangerous Unicode characters in source code to help preve
 
 **This project is currently a Proof of Concept / MVP and is not production-ready!!!**
 
+## DISCLAIMER - Known Security Limitation
+During the bachelor's thesis, a security flaw was identified:
+**Glyphcheck cannot detect certain characters as homoglyphs - even when they are explicitly added to the config file.**
+This was confirmed for **U+212A (Kelvin Sign)**.
+
+**Cause:** Before a character is checked, it is normalized using NFC. During this process, `U+212A` (Kelvin Sign) is converted into `U+004B` (Latin Capital Letter K). As a result, `U+212A` is never actually evaluated, and the check is silently bypassed.
+
+> **Note:** It is very likely that other characters exhibit the same behaviour.
+
 ## Overview
 Modern programming languages allow Unicode characters in identifiers and strings. While useful, this also enables attackers to introduce visually similar characters (homoglyphs) that can hide malicious code.
 
